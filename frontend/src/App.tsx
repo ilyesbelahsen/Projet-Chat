@@ -1,15 +1,60 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/useAuth";
 import HomePage from "./pages/HomePage";
+import MyRooms from "./pages/MyRooms";
+import RoomChat from "./pages/RoomChat";
 import ChatGeneral from "./pages/ChatGeneral";
+import Login from "./pages/Login";
+import type { JSX } from "react";
+import { AuthProvider } from "./context/AuthProvider";
+
+// Route privée
+const PrivateRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/chat" element={<ChatGeneral />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <HomePage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <PrivateRoute>
+                <ChatGeneral />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/my-rooms"
+            element={
+              <PrivateRoute>
+                <MyRooms />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/rooms/:roomId"
+            element={
+              <PrivateRoute>
+                <RoomChat />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
