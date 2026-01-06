@@ -18,6 +18,11 @@ import { User } from '../users/user.entity';
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
 
+  @Get('general')
+  async getGeneralRoom() {
+    return this.roomsService.getGeneralRoom();
+  }
+
   @Get('my-rooms')
   async getMyRooms(@Req() req: Request) {
     const user = req.user as User;
