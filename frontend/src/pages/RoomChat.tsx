@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import type { Message } from "../types/chat";
-import type { User } from "../types/user";
+import { useParams } from "react-router-dom";
 import ChatLayout from "../components/ChatLayout";
 import ChatHeader from "../components/ChatHeader";
 import RoomSettingsModal from "../components/RoomSettingsModal";
 import { roomsService } from "../services/roomsService";
 import { messagesService } from "../services/messagesService";
+import type { Message } from "../types/chat";
+import type { User } from "../types/user";
+import {
+  connectSocket,
+  disconnectSocket,
+  joinRoom,
+  leaveRoom,
+  sendMessage,
+  onNewMessage,
+} from "../services/socketService";
 
 const RoomChat: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
-  const navigate = useNavigate();
-
   const [messages, setMessages] = useState<Message[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [members, setMembers] = useState<User[]>([]);
@@ -34,57 +40,32 @@ const RoomChat: React.FC = () => {
           : "";
         setCurrentUserId(userId);
         setIsOwner(roomData.ownerId === userId);
+
+        const socketInstance = connectSocket(userId);
+        socketInstance.on("connect", () => {
+          joinRoom(roomId);
+          onNewMessage((msg: Message) => {
+            setMessages((prev) =>
+              prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
+            );
+          });
+        });
       } catch (err) {
         console.error(err);
       }
     };
 
     fetchRoomData();
+
+    return () => {
+      if (roomId) leaveRoom(roomId);
+      disconnectSocket();
+    };
   }, [roomId]);
 
-  // Envoyer un message
-  const handleSendMessage = async (content: string) => {
-    try {
-      const newMessage = await messagesService.sendMessage(roomId!, content);
-
-      setMessages((prev) => [...prev, newMessage]);
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'envoi du message");
-    }
-  };
-
-  // Ajouter membre
-  const handleAddMember = async (username: string) => {
-    try {
-      await roomsService.addMember(roomId!, username);
-      const roomData = await roomsService.getRoom(roomId!);
-      setMembers(roomData.members); // <- récupère la liste complète depuis l'API
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Supprimer membre
-  const handleRemoveMember = async (userId: string) => {
-    try {
-      await roomsService.removeMember(roomId!, userId);
-      setMembers((prev) => prev.filter((m) => m.id !== userId));
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression du membre");
-    }
-  };
-
-  // Supprimer room
-  const handleDeleteRoom = async () => {
-    try {
-      await roomsService.deleteRoom(roomId!);
-      navigate("/my-rooms");
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la suppression de la room");
-    }
+  const handleSendMessage = (content: string) => {
+    if (!roomId) return;
+    sendMessage({ roomId, content, userId: currentUserId });
   };
 
   return (
@@ -97,20 +78,28 @@ const RoomChat: React.FC = () => {
           <ChatHeader
             title={`Room: ${roomId}`}
             onOpenSettings={() => setModalOpen(true)}
-            settings={true}
+            settings
           />
         }
       />
-
       <RoomSettingsModal
-        key={members.map((m) => m.id).join("-")} // <- force re-render quand members change
+        key={members.map((m) => m.id).join("-")}
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onAddMember={handleAddMember}
-        onDeleteRoom={handleDeleteRoom}
+        onAddMember={async (username) => {
+          await roomsService.addMember(roomId!, username);
+          const roomData = await roomsService.getRoom(roomId!);
+          setMembers(roomData.members);
+        }}
+        onDeleteRoom={async () => {
+          await roomsService.deleteRoom(roomId!);
+        }}
         members={members}
         isOwner={isOwner}
-        onRemoveMember={handleRemoveMember}
+        onRemoveMember={async (userId) => {
+          await roomsService.removeMember(roomId!, userId);
+          setMembers((prev) => prev.filter((m) => m.id !== userId));
+        }}
         currentUserId={currentUserId}
       />
     </>

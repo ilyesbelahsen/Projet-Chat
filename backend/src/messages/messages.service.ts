@@ -21,7 +21,6 @@ export class MessagesService {
     private roomMembersRepository: Repository<RoomMember>,
   ) {}
 
-  // Récupérer tous les messages d'une room
   async getRoomMessages(roomId: string, user: User): Promise<Message[]> {
     const room = await this.roomsRepository.findOne({
       where: { id: roomId },
@@ -29,14 +28,12 @@ export class MessagesService {
     });
     if (!room) throw new NotFoundException('Room non trouvée');
 
-    // Si owner = null, tout le monde a accès
     if (room.owner !== null) {
       const isMember =
         room.owner.id === user.id ||
         (await this.roomMembersRepository.count({
           where: { room: { id: roomId }, user: { id: user.id } },
         })) > 0;
-
       if (!isMember)
         throw new ForbiddenException("Vous n'êtes pas membre de cette room");
     }
@@ -48,7 +45,6 @@ export class MessagesService {
     });
   }
 
-  // Envoyer un message
   async sendMessage(
     roomId: string,
     author: User,
@@ -56,9 +52,8 @@ export class MessagesService {
     type: MessageType = MessageType.TEXT,
     fileUrl?: string,
   ): Promise<Message> {
-    if (!content && !fileUrl) {
+    if (!content && !fileUrl)
       throw new Error('Le contenu ou le fichier doit être fourni');
-    }
 
     const room = await this.roomsRepository.findOne({
       where: { id: roomId },
@@ -66,14 +61,12 @@ export class MessagesService {
     });
     if (!room) throw new NotFoundException('Room non trouvée');
 
-    // Si owner = null, tout le monde peut envoyer
     if (room.owner !== null) {
       const isMember =
         room.owner.id === author.id ||
         (await this.roomMembersRepository.count({
           where: { room: { id: roomId }, user: { id: author.id } },
         })) > 0;
-
       if (!isMember)
         throw new ForbiddenException("Vous n'êtes pas membre de cette room");
     }
@@ -86,6 +79,27 @@ export class MessagesService {
       file_url: fileUrl,
     });
 
-    return this.messagesRepository.save(message);
+    const saved = await this.messagesRepository.save(message);
+
+    const messageWithAuthor = await this.messagesRepository.findOne({
+      where: { id: saved.id },
+      relations: ['author', 'room'],
+    });
+
+    if (!messageWithAuthor)
+      throw new NotFoundException('Message introuvable après sauvegarde');
+
+    return messageWithAuthor;
+  }
+
+  async getMessageById(messageId: string): Promise<Message> {
+    const msg = await this.messagesRepository.findOne({
+      where: { id: messageId },
+      relations: ['author', 'room'],
+    });
+
+    if (!msg) throw new NotFoundException('Message introuvable');
+
+    return msg;
   }
 }
