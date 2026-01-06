@@ -7,12 +7,19 @@ interface ChatLayoutProps {
   title: string;
   messages: Message[];
   onSendMessage: (content: string) => void;
+  header?: React.ReactNode; // <-- ajouté
 }
 
-const ChatLayout = ({ title, messages, onSendMessage }: ChatLayoutProps) => {
+const ChatLayout = ({
+  title,
+  messages,
+  onSendMessage,
+  header,
+}: ChatLayoutProps) => {
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      <ChatHeader title={title} />
+      {/* Si on fournit un header custom, on l'utilise, sinon header par défaut */}
+      {header || <ChatHeader title={title} />}
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <MessageList messages={messages} />

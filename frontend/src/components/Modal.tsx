@@ -6,6 +6,7 @@ interface ModalProps {
   onClose: () => void;
   onSubmit: (data: { name: string }) => void | Promise<void>;
   fields: { label: string; name: "name"; type?: string }[];
+  error?: string | null;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -14,6 +15,7 @@ const Modal: React.FC<ModalProps> = ({
   onClose,
   onSubmit,
   fields,
+  error,
 }) => {
   const [formData, setFormData] = React.useState<{ name: string }>({
     name: "",
@@ -25,7 +27,6 @@ const Modal: React.FC<ModalProps> = ({
 
   const handleSubmit = async () => {
     await onSubmit(formData);
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -47,6 +48,7 @@ const Modal: React.FC<ModalProps> = ({
               />
             </div>
           ))}
+          {error && <p className="text-red-600 mt-2">{error}</p>}
         </div>
         <div className="mt-6 flex justify-end gap-3">
           <button

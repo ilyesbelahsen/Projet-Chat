@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -32,11 +33,33 @@ export class RoomsController {
   @Post(':id/add-member')
   async addMember(
     @Param('id') roomId: string,
-    @Body('userId') userId: string,
+    @Body('username') username: string,
     @Req() req: Request,
   ) {
     const addedBy = req.user as User;
-    const user = { id: userId } as User; // simple placeholder, récupérer correctement depuis UserService si nécessaire
-    return this.roomsService.addMember(roomId, user, addedBy);
+    return this.roomsService.addMember(roomId, username, addedBy);
+  }
+
+  @Delete(':id')
+  async deleteRoom(@Param('id') roomId: string, @Req() req: Request) {
+    const user = req.user as User;
+    return this.roomsService.deleteRoom(roomId, user);
+  }
+
+  // 🔹 Récupérer les détails d’une room (owner + membres)
+  @Get(':id')
+  async getRoom(@Param('id') roomId: string) {
+    return this.roomsService.getRoom(roomId);
+  }
+
+  // 🔹 Supprimer un membre
+  @Delete(':id/members/:userId')
+  async removeMember(
+    @Param('id') roomId: string,
+    @Param('userId') userId: string,
+    @Req() req: Request,
+  ) {
+    const user = req.user as User;
+    return this.roomsService.removeMember(roomId, userId, user);
   }
 }
