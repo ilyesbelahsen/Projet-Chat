@@ -19,7 +19,7 @@ export class Room {
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'owner_id' })
-  owner: User;
+  owner: User | null;
 
   @CreateDateColumn()
   created_at: Date;

@@ -23,21 +23,23 @@ export class MessagesService {
 
   // Récupérer tous les messages d'une room
   async getRoomMessages(roomId: string, user: User): Promise<Message[]> {
-    // Vérifier que l'utilisateur est membre ou owner
     const room = await this.roomsRepository.findOne({
       where: { id: roomId },
       relations: ['owner'],
     });
     if (!room) throw new NotFoundException('Room non trouvée');
 
-    const isMember =
-      room.owner.id === user.id ||
-      (await this.roomMembersRepository.count({
-        where: { room: { id: roomId }, user: { id: user.id } },
-      })) > 0;
+    // Si owner = null, tout le monde a accès
+    if (room.owner !== null) {
+      const isMember =
+        room.owner.id === user.id ||
+        (await this.roomMembersRepository.count({
+          where: { room: { id: roomId }, user: { id: user.id } },
+        })) > 0;
 
-    if (!isMember)
-      throw new ForbiddenException("Vous n'êtes pas membre de cette room");
+      if (!isMember)
+        throw new ForbiddenException("Vous n'êtes pas membre de cette room");
+    }
 
     return this.messagesRepository.find({
       where: { room: { id: roomId } },
@@ -64,14 +66,17 @@ export class MessagesService {
     });
     if (!room) throw new NotFoundException('Room non trouvée');
 
-    const isMember =
-      room.owner.id === author.id ||
-      (await this.roomMembersRepository.count({
-        where: { room: { id: roomId }, user: { id: author.id } },
-      })) > 0;
+    // Si owner = null, tout le monde peut envoyer
+    if (room.owner !== null) {
+      const isMember =
+        room.owner.id === author.id ||
+        (await this.roomMembersRepository.count({
+          where: { room: { id: roomId }, user: { id: author.id } },
+        })) > 0;
 
-    if (!isMember)
-      throw new ForbiddenException("Vous n'êtes pas membre de cette room");
+      if (!isMember)
+        throw new ForbiddenException("Vous n'êtes pas membre de cette room");
+    }
 
     const message = this.messagesRepository.create({
       room,

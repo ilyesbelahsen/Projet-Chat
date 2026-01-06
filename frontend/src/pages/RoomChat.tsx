@@ -21,15 +21,26 @@ const RoomChat: React.FC = () => {
   useEffect(() => {
     if (!roomId) return;
 
-    // Charger les messages + membres
     const fetchRoomData = async () => {
       try {
-        // 1️⃣ Charger les messages
         const msgs = await messagesService.getMessages(roomId);
-        setMessages(msgs);
 
-        // 2️⃣ Charger les membres et owner
-        const roomData = await roomsService.getRoom(roomId); // doit retourner { members, ownerId }
+        // Ajouter le message système uniquement si aucun message n'existe
+        const messagesWithSystem =
+          msgs.length === 0
+            ? [
+                {
+                  id: "system-1",
+                  content: "Bienvenue sur le chat général 👋",
+                  author: { id: "system", username: "System" },
+                  created_at: new Date().toISOString(),
+                },
+              ]
+            : msgs;
+
+        setMessages(messagesWithSystem);
+
+        const roomData = await roomsService.getRoom(roomId);
         setMembers(roomData.members);
 
         const userId = localStorage.getItem("user")
@@ -47,10 +58,16 @@ const RoomChat: React.FC = () => {
   }, [roomId]);
 
   // Envoyer un message
+  // Envoyer un message
   const handleSendMessage = async (content: string) => {
     try {
       const newMessage = await messagesService.sendMessage(roomId!, content);
-      setMessages((prev) => [...prev, newMessage]);
+
+      setMessages((prev) => {
+        // Vérifie si le message existe déjà par ID
+        if (prev.find((msg) => msg.id === newMessage.id)) return prev;
+        return [...prev, newMessage];
+      });
     } catch (err) {
       console.error(err);
       alert("Erreur lors de l'envoi du message");

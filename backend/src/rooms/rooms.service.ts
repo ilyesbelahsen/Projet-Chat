@@ -4,32 +4,57 @@ import {
   ForbiddenException,
   ConflictException,
   BadRequestException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Room } from './room.entity';
 import { User } from '../users/user.entity';
-import { RoomMember } from 'src/room_members/room-member.entity';
+import { RoomMember } from '../room_members/room-member.entity';
 import { UsersService } from '../users/users.service';
 
 @Injectable()
-export class RoomsService {
+export class RoomsService implements OnModuleInit {
   constructor(
     @InjectRepository(Room)
-    private roomsRepository: Repository<Room>,
+    private readonly roomsRepository: Repository<Room>,
+
     @InjectRepository(RoomMember)
-    private roomMembersRepository: Repository<RoomMember>,
+    private readonly roomMembersRepository: Repository<RoomMember>,
+
     private readonly usersService: UsersService,
   ) {}
 
-  // Créer une room
+  // Création automatique de la room générale
+  async onModuleInit() {
+    const generalRoom = await this.roomsRepository.findOne({
+      where: { name: 'Chat Général' },
+    });
+
+    if (!generalRoom) {
+      console.log('Création de la room générale...');
+      const room = this.roomsRepository.create({
+        name: 'Chat Général',
+        owner: null, // accessible à tous
+      });
+      await this.roomsRepository.save(room);
+    }
+  }
+
+  // 🔹 Récupérer la room générale + ses membres
+  async getGeneralRoom(): Promise<Room> {
+    const room = await this.roomsRepository.findOne({
+      where: { name: 'Chat Général' },
+    });
+    if (!room) throw new NotFoundException('Room générale introuvable');
+    return room;
+  }
+  // Créer une room classique
   async createRoom(name: string, owner: User): Promise<Room> {
-    // Vérifier que le nom n'est pas vide
     if (!name || !name.trim()) {
       throw new BadRequestException('Le nom de la room ne peut pas être vide');
     }
 
-    // Vérifier que le nom n'existe pas déjà pour ce propriétaire
     const existingRoom = await this.roomsRepository.findOne({
       where: { name: name.trim(), owner: { id: owner.id } },
     });
@@ -38,7 +63,6 @@ export class RoomsService {
       throw new ConflictException('Vous avez déjà une room avec ce nom');
     }
 
-    // Création de la room
     const room = this.roomsRepository.create({ name: name.trim(), owner });
     const savedRoom = await this.roomsRepository.save(room);
 
@@ -53,7 +77,7 @@ export class RoomsService {
     return savedRoom;
   }
 
-  // Ajouter un membre à une room
+  // Ajouter un membre
   async addMember(
     roomId: string,
     username: string,
@@ -64,13 +88,21 @@ export class RoomsService {
       relations: ['owner'],
     });
     if (!room) throw new NotFoundException('Room non trouvée');
-    if (room.owner.id !== addedBy.id)
+
+    // Vérifier si le user peut ajouter un membre
+    if (room.owner && room.owner.id !== addedBy.id)
       throw new ForbiddenException(
         'Seul le propriétaire peut ajouter des membres',
       );
 
     const user = await this.usersService.findByUsername(username);
     if (!user) throw new NotFoundException('Utilisateur non trouvé');
+
+    const existingMember = await this.roomMembersRepository.findOne({
+      where: { room: { id: roomId }, user: { id: user.id } },
+    });
+    if (existingMember)
+      throw new ConflictException('Utilisateur déjà membre de cette room');
 
     const member = this.roomMembersRepository.create({
       room,
@@ -92,7 +124,8 @@ export class RoomsService {
       relations: ['owner'],
     });
     if (!room) throw new NotFoundException('Room non trouvée');
-    if (room.owner.id !== removedBy.id)
+
+    if (room.owner && room.owner.id !== removedBy.id)
       throw new ForbiddenException(
         'Seul le propriétaire peut supprimer des membres',
       );
@@ -112,7 +145,8 @@ export class RoomsService {
       relations: ['owner'],
     });
     if (!room) throw new NotFoundException('Room non trouvée');
-    if (room.owner.id !== user.id)
+
+    if (room.owner && room.owner.id !== user.id)
       throw new ForbiddenException(
         'Seul le propriétaire peut supprimer cette room',
       );
@@ -140,8 +174,10 @@ export class RoomsService {
     return Array.from(roomsMap.values());
   }
 
-  // 🔹 Récupérer les détails d'une room
-  async getRoom(roomId: string): Promise<{ ownerId: string; members: User[] }> {
+  // Récupérer les détails d'une room
+  async getRoom(
+    roomId: string,
+  ): Promise<{ ownerId: string | null; members: User[] }> {
     const room = await this.roomsRepository.findOne({
       where: { id: roomId },
       relations: ['owner'],
@@ -154,7 +190,7 @@ export class RoomsService {
     });
 
     return {
-      ownerId: room.owner.id,
+      ownerId: room.owner ? room.owner.id : null,
       members: members.map((m) => m.user),
     };
   }

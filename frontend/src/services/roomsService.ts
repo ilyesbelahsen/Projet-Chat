@@ -40,4 +40,9 @@ export const roomsService = {
     );
     return res.data;
   },
+
+  async getGeneralRoom(): Promise<Room & { members: User[] }> {
+    const res = await api.get("/rooms/general");
+    return res.data;
+  },
 };
