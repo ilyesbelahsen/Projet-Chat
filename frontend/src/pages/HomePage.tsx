@@ -1,14 +1,16 @@
 import React from "react";
-import Card from "./Card";
-import Modal from "./Modal";
+import Card from "../components/Card";
+import Modal from "../components/Modal";
 import { MessageCircle, LogIn, PlusCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const HomePage: React.FC = () => {
   const [modal, setModal] = React.useState<null | "join" | "create">(null);
+  const navigate = useNavigate();
 
   const handleCardClick = (type: "chat" | "join" | "create") => {
     if (type === "chat") {
-      console.log("Accéder au chat général");
+      navigate("/chat");
     } else {
       setModal(type);
     }
