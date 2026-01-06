@@ -6,6 +6,7 @@ import ChatLayout from "../components/ChatLayout";
 import ChatHeader from "../components/ChatHeader";
 import RoomSettingsModal from "../components/RoomSettingsModal";
 import { roomsService } from "../services/roomsService";
+import { messagesService } from "../services/messagesService";
 
 const RoomChat: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -20,22 +21,25 @@ const RoomChat: React.FC = () => {
   useEffect(() => {
     if (!roomId) return;
 
-    // TODO: récupérer les messages depuis le backend
-    // setMessages(...);
-
-    // Récupérer les membres et vérifier si je suis owner
+    // Charger les messages + membres
     const fetchRoomData = async () => {
       try {
-        const roomData = await roomsService.getRoom(roomId); // retourne { members, ownerId }
+        // 1️⃣ Charger les messages
+        const msgs = await messagesService.getMessages(roomId);
+        setMessages(msgs);
+
+        // 2️⃣ Charger les membres et owner
+        const roomData = await roomsService.getRoom(roomId); // doit retourner { members, ownerId }
         setMembers(roomData.members);
 
-        const currentUserId = localStorage.getItem("user")
+        const userId = localStorage.getItem("user")
           ? JSON.parse(localStorage.getItem("user")!).id
-          : null;
-        setCurrentUserId(currentUserId);
-        setIsOwner(roomData.ownerId === currentUserId);
+          : "";
+        setCurrentUserId(userId);
+        setIsOwner(roomData.ownerId === userId);
       } catch (err) {
         console.error(err);
+        alert("Erreur lors du chargement de la room");
       }
     };
 
@@ -43,31 +47,24 @@ const RoomChat: React.FC = () => {
   }, [roomId]);
 
   // Envoyer un message
-  const handleSendMessage = (content: string) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        roomId: roomId!,
-        author: { id: "me", username: "Moi" },
-        content,
-        type: "text",
-        createdAt: new Date().toISOString(),
-      },
-    ]);
+  const handleSendMessage = async (content: string) => {
+    try {
+      const newMessage = await messagesService.sendMessage(roomId!, content);
+      setMessages((prev) => [...prev, newMessage]);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de l'envoi du message");
+    }
   };
 
   // Ajouter membre
-  // Ajouter membre
   const handleAddMember = async (username: string) => {
     try {
-      await roomsService.addMember(roomId!, username);
-
-      // Re-fetch des membres depuis le backend pour être sûr que tout est à jour
-      const roomData = await roomsService.getRoom(roomId!);
-      setMembers(roomData.members);
+      const newMember = await roomsService.addMember(roomId!, username);
+      setMembers((prev) => [...prev, newMember]);
     } catch (err) {
       console.error(err);
+      alert("Erreur lors de l'ajout du membre");
     }
   };
 
@@ -78,6 +75,7 @@ const RoomChat: React.FC = () => {
       setMembers((prev) => prev.filter((m) => m.id !== userId));
     } catch (err) {
       console.error(err);
+      alert("Erreur lors de la suppression du membre");
     }
   };
 
@@ -85,10 +83,10 @@ const RoomChat: React.FC = () => {
   const handleDeleteRoom = async () => {
     try {
       await roomsService.deleteRoom(roomId!);
-
       navigate("/my-rooms");
     } catch (err) {
       console.error(err);
+      alert("Erreur lors de la suppression de la room");
     }
   };
 
