@@ -8,7 +8,7 @@ const ChatGeneral = () => {
       id: "1",
       content: "Bienvenue sur le chat général 👋",
       author: { id: "system", username: "System" },
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     },
   ]);
 
@@ -17,7 +17,7 @@ const ChatGeneral = () => {
       id: crypto.randomUUID(),
       content,
       author: { id: "me", username: "Moi" },
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     };
 
     setMessages((prev) => [...prev, newMessage]);
