@@ -6,6 +6,7 @@ import { MessagesModule } from './messages/messages.module';
 import { RoomMembersModule } from './room_members/room_members.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { AppService } from './app.service';
     UsersModule, // Module pour gérer les users
     RoomsModule, // Module pour gérer les rooms
     RoomMembersModule, // Module pour gérer les membres des rooms
-    MessagesModule, // Module pour gérer les messages
+    MessagesModule,
+    AuthModule, // Module pour gérer les messages
   ],
   controllers: [AppController],
   providers: [AppService],

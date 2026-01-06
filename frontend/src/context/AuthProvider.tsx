@@ -1,47 +1,48 @@
 import React, { createContext, useState, useEffect, type JSX } from "react";
+import type { User } from "../types/chat";
 
-// Définition du type User
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-}
-
-// Définition du contexte
 export interface AuthContextType {
   user: User | null;
-  login: (user: User) => void;
+  token: string | null;
+  login: (user: User, token: string) => void;
   logout: () => void;
 }
 
-// Création du contexte
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider
 export const AuthProvider: React.FC<{
   children: JSX.Element | JSX.Element[];
 }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  const login = (userData: User) => {
+  const login = (userData: User, tokenData: string) => {
     setUser(userData);
+    setToken(tokenData);
     localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("token", tokenData);
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
-  // Charger user depuis localStorage au démarrage
+  // Charger user et token depuis localStorage au démarrage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const storedToken = localStorage.getItem("token");
+    if (storedUser && storedToken) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUser(JSON.parse(storedUser));
+      setToken(storedToken);
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

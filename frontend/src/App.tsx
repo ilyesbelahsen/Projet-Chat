@@ -4,7 +4,7 @@ import HomePage from "./pages/HomePage";
 import MyRooms from "./pages/MyRooms";
 import RoomChat from "./pages/RoomChat";
 import ChatGeneral from "./pages/ChatGeneral";
-import Login from "./pages/Login";
+import LoginPage from "./pages/Login";
 import type { JSX } from "react";
 import { AuthProvider } from "./context/AuthProvider";
 
@@ -19,7 +19,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route
             path="/"
             element={
