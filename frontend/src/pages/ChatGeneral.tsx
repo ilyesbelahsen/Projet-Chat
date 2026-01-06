@@ -3,23 +3,28 @@ import ChatLayout from "../components/ChatLayout";
 import type { Message } from "../types/chat";
 import { messagesService } from "../services/messagesService";
 import { roomsService } from "../services/roomsService";
+import {
+  connectSocket,
+  disconnectSocket,
+  joinRoom,
+  leaveRoom,
+  sendMessage,
+  onNewMessage,
+} from "../services/socketService";
 
 const ChatGeneral: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [generalRoomId, setGeneralRoomId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState("");
 
   useEffect(() => {
     const fetchGeneralRoom = async () => {
       try {
-        // 1️⃣ Récupérer la room générale
         const room = await roomsService.getGeneralRoom();
         setGeneralRoomId(room.id);
 
-        // 2️⃣ Récupérer les messages depuis la BDD
         const msgs = await messagesService.getMessages(room.id);
-
-        // 3️⃣ Ajouter le message système uniquement s'il n'existe pas
         const messagesWithSystem = msgs.some((msg) => msg.id === "system-1")
           ? msgs
           : [
@@ -31,38 +36,40 @@ const ChatGeneral: React.FC = () => {
               },
               ...msgs,
             ];
-
         setMessages(messagesWithSystem);
+
+        const userId = localStorage.getItem("user")
+          ? JSON.parse(localStorage.getItem("user")!).id
+          : "";
+        setCurrentUserId(userId);
+
+        const socketInstance = connectSocket(userId);
+        socketInstance.on("connect", () => {
+          joinRoom(room.id);
+          onNewMessage((msg: Message) => {
+            setMessages((prev) =>
+              prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
+            );
+          });
+        });
       } catch (err) {
-        console.error("Erreur lors du chargement de la room générale :", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchGeneralRoom();
+
+    return () => {
+      if (generalRoomId) leaveRoom(generalRoomId);
+      disconnectSocket();
+    };
   }, []);
 
-  // Envoyer un message
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = (content: string) => {
     if (!generalRoomId) return;
-
-    try {
-      const newMessage = await messagesService.sendMessage(
-        generalRoomId,
-        content
-      );
-
-      // Ajouter le message seulement s'il n'existe pas déjà
-      setMessages((prev) =>
-        prev.some((msg) => msg.id === newMessage.id)
-          ? prev
-          : [...prev, newMessage]
-      );
-    } catch (err) {
-      console.error("Erreur lors de l'envoi du message :", err);
-      alert("Impossible d'envoyer le message");
-    }
+    sendMessage({ roomId: generalRoomId, content, userId: currentUserId });
   };
 
   if (loading) return <div>Chargement du chat général...</div>;
