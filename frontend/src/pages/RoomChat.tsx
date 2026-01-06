@@ -24,21 +24,7 @@ const RoomChat: React.FC = () => {
     const fetchRoomData = async () => {
       try {
         const msgs = await messagesService.getMessages(roomId);
-
-        // Ajouter le message système uniquement si aucun message n'existe
-        const messagesWithSystem =
-          msgs.length === 0
-            ? [
-                {
-                  id: "system-1",
-                  content: "Bienvenue sur le chat général 👋",
-                  author: { id: "system", username: "System" },
-                  created_at: new Date().toISOString(),
-                },
-              ]
-            : msgs;
-
-        setMessages(messagesWithSystem);
+        setMessages(msgs);
 
         const roomData = await roomsService.getRoom(roomId);
         setMembers(roomData.members);
@@ -50,7 +36,6 @@ const RoomChat: React.FC = () => {
         setIsOwner(roomData.ownerId === userId);
       } catch (err) {
         console.error(err);
-        alert("Erreur lors du chargement de la room");
       }
     };
 
@@ -58,16 +43,11 @@ const RoomChat: React.FC = () => {
   }, [roomId]);
 
   // Envoyer un message
-  // Envoyer un message
   const handleSendMessage = async (content: string) => {
     try {
       const newMessage = await messagesService.sendMessage(roomId!, content);
 
-      setMessages((prev) => {
-        // Vérifie si le message existe déjà par ID
-        if (prev.find((msg) => msg.id === newMessage.id)) return prev;
-        return [...prev, newMessage];
-      });
+      setMessages((prev) => [...prev, newMessage]);
     } catch (err) {
       console.error(err);
       alert("Erreur lors de l'envoi du message");
@@ -77,11 +57,11 @@ const RoomChat: React.FC = () => {
   // Ajouter membre
   const handleAddMember = async (username: string) => {
     try {
-      const newMember = await roomsService.addMember(roomId!, username);
-      setMembers((prev) => [...prev, newMember]);
+      await roomsService.addMember(roomId!, username);
+      const roomData = await roomsService.getRoom(roomId!);
+      setMembers(roomData.members); // <- récupère la liste complète depuis l'API
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'ajout du membre");
     }
   };
 
@@ -122,6 +102,7 @@ const RoomChat: React.FC = () => {
       />
 
       <RoomSettingsModal
+        key={members.map((m) => m.id).join("-")} // <- force re-render quand members change
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onAddMember={handleAddMember}

@@ -50,10 +50,17 @@ const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
               className="w-full border rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-300"
             />
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (username.trim()) {
-                  onAddMember(username.trim());
-                  setUsername("");
+                  try {
+                    // Appel API via le parent
+                    await onAddMember(username.trim());
+                    // Vider l'input seulement après que le membre ait été ajouté
+                    setUsername("");
+                  } catch (err) {
+                    console.error(err);
+                    alert("Impossible d'ajouter le membre");
+                  }
                 }
               }}
               className="w-full bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition"
