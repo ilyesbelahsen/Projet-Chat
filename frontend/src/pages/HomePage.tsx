@@ -5,25 +5,40 @@ import { MessageCircle, PlusCircle, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { roomsService } from "../services/roomsService";
+import { AxiosError } from "axios";
 
 const HomePage: React.FC = () => {
   const [modal, setModal] = React.useState<null | "create">(null);
+  const [error, setError] = React.useState<string | null>(null); // <-- état pour le message d'erreur
   const navigate = useNavigate();
 
   const handleCardClick = (type: "chat" | "myRooms" | "create") => {
     if (type === "chat") navigate("/chat");
     else if (type === "myRooms") navigate("/my-rooms");
-    else if (type === "create") setModal("create");
+    else if (type === "create") {
+      setError(null); // reset l'erreur à l'ouverture du modal
+      setModal("create");
+    }
   };
 
   const handleCreateRoom = async (data: { name: string }) => {
     try {
-      const room = await roomsService.createRoom(data.name);
+      // Ne rien faire avant que la création réussisse
+      await roomsService.createRoom(data.name);
+
       setModal(null);
-      alert(`Room "${room.name}" créée avec succès !`);
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de la création de la room");
+      setError(null);
+    } catch (err: unknown) {
+      // Ne pas fermer le modal, juste afficher le message d'erreur
+      if (err instanceof AxiosError) {
+        setError(
+          err.response?.data?.message || "Erreur lors de la création de la room"
+        );
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Erreur inconnue lors de la création de la room");
+      }
     }
   };
 
@@ -67,6 +82,7 @@ const HomePage: React.FC = () => {
           onClose={() => setModal(null)}
           onSubmit={handleCreateRoom}
           fields={[{ label: "Nom de la room", name: "name" }]}
+          error={error}
         />
       </div>
     </Layout>
