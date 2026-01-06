@@ -1,8 +1,8 @@
 import type { User } from "../types/user";
+import { api } from "./api";
+import { AxiosError } from "axios";
 
-const API_URL = "http://localhost:3000";
-
-interface AuthResponse {
+export interface AuthResponse {
   user: User;
   token: string;
 }
@@ -13,28 +13,38 @@ export const authService = {
     email: string,
     password: string
   ): Promise<AuthResponse> {
-    const res = await fetch(`${API_URL}/auth/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || "Erreur lors de l'inscription");
+    try {
+      const res = await api.post<AuthResponse>("/auth/signup", {
+        username,
+        email,
+        password,
+      });
+      return res.data;
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        // On récupère le message retourné par le backend
+        throw new Error(
+          err.response?.data?.message || "Erreur lors de l'inscription"
+        );
+      }
+      throw new Error("Erreur lors de l'inscription");
     }
-    return res.json();
   },
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || "Erreur lors de la connexion");
+    try {
+      const res = await api.post<AuthResponse>("/auth/login", {
+        email,
+        password,
+      });
+      return res.data;
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        throw new Error(
+          err.response?.data?.message || "Erreur lors de la connexion"
+        );
+      }
+      throw new Error("Erreur lors de la connexion");
     }
-    return res.json();
   },
 };

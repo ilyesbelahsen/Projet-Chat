@@ -4,8 +4,8 @@ interface ModalProps {
   isOpen: boolean;
   title: string;
   onClose: () => void;
-  onSubmit: (data: Record<string, string>) => void;
-  fields: { label: string; name: string; type?: string }[];
+  onSubmit: (data: { name: string }) => void | Promise<void>;
+  fields: { label: string; name: "name"; type?: string }[];
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -15,14 +15,16 @@ const Modal: React.FC<ModalProps> = ({
   onSubmit,
   fields,
 }) => {
-  const [formData, setFormData] = React.useState<Record<string, string>>({});
+  const [formData, setFormData] = React.useState<{ name: string }>({
+    name: "",
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
-    onSubmit(formData);
+  const handleSubmit = async () => {
+    await onSubmit(formData);
     onClose();
   };
 
@@ -39,7 +41,7 @@ const Modal: React.FC<ModalProps> = ({
               <input
                 type={field.type || "text"}
                 name={field.name}
-                value={formData[field.name] || ""}
+                value={formData[field.name]}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
               />

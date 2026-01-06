@@ -4,6 +4,7 @@ import Modal from "../components/Modal";
 import { MessageCircle, PlusCircle, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
+import { roomsService } from "../services/roomsService";
 
 const HomePage: React.FC = () => {
   const [modal, setModal] = React.useState<null | "create">(null);
@@ -15,9 +16,15 @@ const HomePage: React.FC = () => {
     else if (type === "create") setModal("create");
   };
 
-  const handleCreateRoom = (data: Record<string, string>) => {
-    console.log("Création de room:", data);
-    setModal(null);
+  const handleCreateRoom = async (data: { name: string }) => {
+    try {
+      const room = await roomsService.createRoom(data.name);
+      setModal(null);
+      alert(`Room "${room.name}" créée avec succès !`);
+    } catch (err) {
+      console.error(err);
+      alert("Erreur lors de la création de la room");
+    }
   };
 
   return (
@@ -59,13 +66,7 @@ const HomePage: React.FC = () => {
           title="Créer une Room"
           onClose={() => setModal(null)}
           onSubmit={handleCreateRoom}
-          fields={[
-            { label: "Nom de la room", name: "name" },
-            {
-              label: "Inviter des membres (ID séparés par virgule)",
-              name: "members",
-            },
-          ]}
+          fields={[{ label: "Nom de la room", name: "name" }]}
         />
       </div>
     </Layout>
