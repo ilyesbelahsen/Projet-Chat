@@ -69,6 +69,7 @@ const ChatGeneral: React.FC = () => {
 
   return (
     <ChatLayout
+      settings={false}
       title="Chat Général"
       messages={messages}
       onSendMessage={handleSendMessage}

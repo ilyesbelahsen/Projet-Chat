@@ -1,26 +1,43 @@
 import React from "react";
-import { User as UserIcon, LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { User as UserIcon, LogOut, ArrowLeft } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
   };
 
+  // Afficher la flèche seulement si on n'est pas sur la page d'accueil
+  const showBackArrow = location.pathname !== "/";
+
   return (
     <header className="w-full p-4 bg-white shadow flex justify-between items-center">
-      {/* Logo */}
-      <h1
-        className="font-bold text-xl cursor-pointer"
-        onClick={() => navigate("/")}
-      >
-        Cloud Chat
-      </h1>
+      <div className="flex items-center gap-4">
+        {showBackArrow && (
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="font-medium">Retour</span>
+          </button>
+        )}
+
+        {!showBackArrow && (
+          <h1
+            className="font-bold text-xl cursor-pointer"
+            onClick={() => navigate("/")}
+          >
+            Cloud Chat
+          </h1>
+        )}
+      </div>
 
       {/* Auth */}
       {user ? (

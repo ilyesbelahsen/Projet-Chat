@@ -97,6 +97,7 @@ const RoomChat: React.FC = () => {
           <ChatHeader
             title={`Room: ${roomId}`}
             onOpenSettings={() => setModalOpen(true)}
+            settings={true}
           />
         }
       />
