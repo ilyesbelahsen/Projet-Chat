@@ -1,66 +1,102 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import { authService } from "../services/authService";
 
-const Login: React.FC = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [mode, setMode] = useState<"login" | "signup">("login");
+const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSignup, setIsSignup] = useState(false);
+
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Frontend only : on simule l'authentification
-    const fakeUser = { id: crypto.randomUUID(), username, email };
-    login(fakeUser);
-    navigate("/"); // Redirige vers home après login
+    setError("");
+
+    try {
+      const res = isSignup
+        ? await authService.signup(username, email, password)
+        : await authService.login(email, password);
+
+      login(res.user, res.token);
+      navigate("/");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Une erreur inconnue est survenue");
+      }
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          {mode === "login" ? "Se connecter" : "S’inscrire"}
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "signup" && (
-            <input
-              type="text"
-              placeholder="Nom d'utilisateur"
-              className="w-full p-3 border rounded"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          )}
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded shadow-md w-full max-w-sm"
+      >
+        <h2 className="text-2xl font-bold mb-4">
+          {isSignup ? "Créer un compte" : "Connexion"}
+        </h2>
+
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+
+        {isSignup && (
           <input
-            type="email"
-            placeholder="Email"
-            className="w-full p-3 border rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Nom d'utilisateur"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full p-2 mb-4 border rounded"
             required
           />
-          <button
-            type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded"
-          >
-            {mode === "login" ? "Se connecter" : "S’inscrire"}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-gray-500">
-          {mode === "login" ? "Pas de compte ?" : "Déjà un compte ?"}{" "}
-          <button
-            className="text-blue-500 underline"
-            onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          >
-            {mode === "login" ? "S’inscrire" : "Se connecter"}
-          </button>
+        )}
+
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-2 mb-4 border rounded"
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-2 mb-4 border rounded"
+          required
+        />
+
+        <button
+          type="submit"
+          className={`w-full p-2 rounded text-white ${
+            isSignup
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-blue-500 hover:bg-blue-600"
+          }`}
+        >
+          {isSignup ? "Créer un compte" : "Se connecter"}
+        </button>
+
+        <p
+          className="text-sm text-center mt-4 text-blue-500 cursor-pointer"
+          onClick={() => setIsSignup(!isSignup)}
+        >
+          {isSignup
+            ? "Déjà un compte ? Se connecter"
+            : "Pas de compte ? Créer un compte"}
         </p>
-      </div>
+      </form>
     </div>
   );
 };
 
-export default Login;
+export default LoginPage;
