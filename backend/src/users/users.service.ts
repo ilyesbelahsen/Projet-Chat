@@ -55,4 +55,15 @@ export class UsersService {
     if (!user) throw new NotFoundException('Utilisateur non trouvé');
     await this.usersRepository.remove(user);
   }
+
+  async updatePassword(userId: string, newPassword: string) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) throw new Error("User not found");
+
+    const salt = await bcrypt.genSalt(10);
+    user.password_hash = await bcrypt.hash(newPassword, salt);
+
+    await this.usersRepository.save(user);
+    return { ok: true };
+  }
 }

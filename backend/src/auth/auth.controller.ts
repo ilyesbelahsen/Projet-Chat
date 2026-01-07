@@ -2,6 +2,9 @@ import { Controller, Post, Body, Req, Res, UnauthorizedException } from '@nestjs
 import { AuthService } from './auth.service';
 import { LoginDto, SignupDto } from './signup.dto';
 import type { Request, Response } from 'express';
+import { ForgotPasswordDto } from "./forgot-password.dto";
+import { ResetPasswordDto } from "./reset-password.dto";
+
 
 @Controller('auth')
 export class AuthController {
@@ -49,4 +52,15 @@ export class AuthController {
     res.clearCookie('refresh_token', { path: '/auth/refresh' });
     return { ok: true };
   }
+
+  @Post("forgot-password")
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.requestPasswordReset(dto.email);
+  }
+
+  @Post("reset-password")
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.newPassword);
+  }
+
 }

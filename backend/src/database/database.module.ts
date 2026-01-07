@@ -5,6 +5,7 @@ import { Room } from '../rooms/room.entity';
 import { Message } from '../messages/message.entity';
 import { RoomMember } from 'src/room_members/room-member.entity';
 import { RefreshTokenEntity } from 'src/auth/refresh-token.entity';
+import { PasswordResetTokenEntity } from 'src/auth/password-reset.entity';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { RefreshTokenEntity } from 'src/auth/refresh-token.entity';
       username: 'chat_user',
       password: 'password',
       database: 'chat_app',
-      entities: [User, Room, RoomMember, Message, RefreshTokenEntity],
+      entities: [User, Room, RoomMember, Message, RefreshTokenEntity, PasswordResetTokenEntity],
       synchronize: true, // seulement en dev pour créer les tables automatiquement
       logging: true,
     }),

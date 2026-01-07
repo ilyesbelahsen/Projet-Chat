@@ -5,6 +5,9 @@ import MyRooms from "./pages/MyRooms";
 import RoomChat from "./pages/RoomChat";
 import ChatGeneral from "./pages/ChatGeneral";
 import LoginPage from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+
 import type { JSX } from "react";
 import { AuthProvider } from "./context/AuthProvider";
 
@@ -24,6 +27,8 @@ function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route
                         path="/"
                         element={

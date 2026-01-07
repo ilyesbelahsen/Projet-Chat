@@ -12,6 +12,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RefreshTokenEntity } from './refresh-token.entity';
 import { randomBytes, createHash } from 'crypto';
+import { PasswordResetTokenEntity } from "./password-reset.entity";
+
 
 
 @Injectable()
@@ -21,6 +23,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(RefreshTokenEntity)
     private readonly refreshRepo: Repository<RefreshTokenEntity>,
+    @InjectRepository(PasswordResetTokenEntity)
+    private readonly resetRepo: Repository<PasswordResetTokenEntity>,
+
   ) {}
 
   private hash(token: string) {
@@ -134,6 +139,55 @@ export class AuthService {
       row.revokedAt = new Date();
       await this.refreshRepo.save(row);
     }
+    return { ok: true };
+  }
+
+  async requestPasswordReset(email: string) {
+    // Toujours répondre OK même si email inexistant (anti-enumération)
+    const user = await this.usersService.findByEmail(email);
+    if (!user) return { ok: true };
+
+    const raw = randomBytes(48).toString("hex");
+    const tokenHash = this.hash(raw);
+
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1h
+
+    await this.resetRepo.save({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+      usedAt: null,
+    });
+
+    // Lien frontend (AWS-ready: ce sera un domaine CloudFront/S3 plus tard)
+    const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:5173";
+    const link = `${frontendUrl}/reset-password?token=${raw}`;
+
+    // Minimaliste: log console en dev
+    console.log(`[RESET PASSWORD] Send link to ${email}: ${link}`);
+
+    // Plus tard: service email (SES) ici
+
+    return { ok: true };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const tokenHash = this.hash(token);
+
+    const row = await this.resetRepo.findOne({ where: { tokenHash } });
+    if (!row) throw new UnauthorizedException("Token invalide");
+    if (row.usedAt) throw new UnauthorizedException("Token déjà utilisé");
+    if (row.expiresAt.getTime() < Date.now()) throw new UnauthorizedException("Token expiré");
+
+    const user = await this.usersService.findById(row.userId);
+    if (!user) throw new UnauthorizedException("Utilisateur introuvable");
+
+    // Mettre à jour le mot de passe (dépend de ton UsersService)
+    await this.usersService.updatePassword(user.id, newPassword);
+
+    row.usedAt = new Date();
+    await this.resetRepo.save(row);
+
     return { ok: true };
   }
 

@@ -10,7 +10,7 @@ export const connectSocket = (token: string): Socket => {
 
   socket = io(SOCKET_URL, {
     transports: ["websocket"],
-    auth: { token }, // ✅ handshake JWT
+    auth: { token }, // handshake JWT
   });
 
   return socket;
@@ -32,7 +32,7 @@ export const leaveRoom = (roomId: string) => {
 };
 
 export const sendMessage = (data: { roomId: string; content: string }) => {
-  socket?.emit("sendMessage", data); // ✅ plus de userId
+  socket?.emit("sendMessage", data); // plus de userId
 };
 
 export const onNewMessage = (callback: (msg: Message) => void) => {
