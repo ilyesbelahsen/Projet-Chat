@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const baseURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
 export const api = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL,
   withCredentials: true, // obligatoire pour envoyer le cookie refresh_token
 });
 
