@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const baseURL = (window as any).__ENV__?.BACKEND_URL;
 
 export const api = axios.create({
   baseURL,

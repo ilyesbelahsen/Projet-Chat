@@ -1,25 +1,22 @@
 # Étape 1 : build
 FROM node:20-alpine AS builder
-
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
-
 COPY . .
 RUN npm run build
 
-# Étape 2 : production avec Nginx
+# Étape 2 : production
 FROM nginx:alpine
 
-# Copier le build dans le dossier public d'nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copier la config Nginx personnalisée si nécessaire
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Entrypoint runtime
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-# Exposer le port 80
 EXPOSE 80
 
-# Démarrage Nginx
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
