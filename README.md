@@ -1,0 +1,19 @@
+BDD 
+
+Sudo mysql -u root -p
+CREATE DATABASE chat_app;
+CREATE USER 'chat_user'@'%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON chat_app.* TO 'chat_user'@'%';
+FLUSH PRIVILEGES;
+
+
+BACK 
+
+npm install
+npm run start:dev
+
+
+FRONT
+
+npm install
+npm run dev
