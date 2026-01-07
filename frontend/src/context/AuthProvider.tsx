@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useState, type JSX } from "react";
-import type { User } from "../types/chat"; // garde ton import actuel si c’est celui que tu utilises
 import { authService } from "../services/authService";
 import { setApiToken } from "../services/api";
+import type { User } from "../types/user";
 
 export interface AuthContextType {
   user: User | null;
@@ -9,6 +9,7 @@ export interface AuthContextType {
   isReady: boolean; // important
   login: (user: User, token: string) => void;
   logout: () => void; // on garde void pour ne pas casser tes composants
+  updateUser: (user: User) => void; // 👈 AJOUT
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +35,10 @@ export const AuthProvider: React.FC<{
     setApiToken(null);
   };
 
+  const updateUser = (userData: User) => {
+    setUser(userData);
+  };
+
   // Au chargement: on tente un refresh via cookie httpOnly
   useEffect(() => {
     (async () => {
@@ -56,9 +61,11 @@ export const AuthProvider: React.FC<{
   if (!isReady) return null;
 
   return (
-      <AuthContext.Provider value={{ user, token, isReady, login, logout }}>
-        {children}
-      </AuthContext.Provider>
+    <AuthContext.Provider
+      value={{ user, token, isReady, login, logout, updateUser }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 };
 
