@@ -4,53 +4,97 @@ import {
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { UnauthorizedException } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { JwtService } from '@nestjs/jwt';
 import { MessagesService } from './messages.service';
 import { User } from '../users/user.entity';
 
-@WebSocketGateway({ cors: true })
-export class ChatGateway {
+type JwtPayload = { id: string; username: string; iat?: number; exp?: number };
+
+@WebSocketGateway({
+  cors: {
+    origin: process.env.WEB_ORIGIN ?? 'http://localhost:5173',
+    credentials: true,
+  },
+})
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(
+      private readonly messagesService: MessagesService,
+      private readonly jwtService: JwtService,
+  ) {}
 
-  @SubscribeMessage('sendMessage')
-  async handleSendMessage(
-    @MessageBody() data: { roomId: string; content: string; userId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
+  handleConnection(client: Socket) {
     try {
-      const author: User = { id: data.userId } as User;
+      const token = client.handshake.auth?.token as string | undefined;
+      if (!token) throw new UnauthorizedException('Missing token');
 
-      const message = await this.messagesService.sendMessage(
-        data.roomId,
-        author,
-        data.content,
-      );
+      const payload = this.jwtService.verify<JwtPayload>(token, {
+        secret: process.env.JWT_SECRET || 'supersecretkey',
+      });
 
-      this.server.to(data.roomId).emit('newMessage', message);
-      console.log(`[BACK] Message émis à la room: ${data.roomId}`);
-    } catch (err) {
-      console.error(`[BACK] Erreur sendMessage:`, err);
-      client.emit('error', { message: (err as Error).message });
+      if (!payload?.id) throw new UnauthorizedException('Invalid token payload');
+
+      // On attache l’identité au socket (source de vérité)
+      client.data.userId = payload.id;
+      client.data.username = payload.username;
+
+      // (optionnel) log
+      // console.log(`[WS] Connected userId=${payload.id}`);
+    } catch (e) {
+      // Refus net : pas d’utilisateur => pas de socket
+      client.disconnect(true);
     }
+  }
+
+  handleDisconnect(client: Socket) {
+    // console.log(`[WS] Disconnected userId=${client.data.userId}`);
   }
 
   @SubscribeMessage('joinRoom')
   handleJoinRoom(
-    @MessageBody() data: { roomId: string },
-    @ConnectedSocket() client: Socket,
+      @MessageBody() data: { roomId: string },
+      @ConnectedSocket() client: Socket,
   ) {
+    if (!client.data.userId) throw new UnauthorizedException();
     client.join(data.roomId);
   }
 
   @SubscribeMessage('leaveRoom')
   handleLeaveRoom(
-    @MessageBody() data: { roomId: string },
-    @ConnectedSocket() client: Socket,
+      @MessageBody() data: { roomId: string },
+      @ConnectedSocket() client: Socket,
   ) {
+    if (!client.data.userId) throw new UnauthorizedException();
     client.leave(data.roomId);
+  }
+
+  @SubscribeMessage('sendMessage')
+  async handleSendMessage(
+      @MessageBody() data: { roomId: string; content: string }, // ✅ plus de userId !
+      @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const userId = client.data.userId as string | undefined;
+      if (!userId) throw new UnauthorizedException('Not authenticated');
+
+      const author: User = { id: userId } as User;
+
+      const message = await this.messagesService.sendMessage(
+          data.roomId,
+          author,
+          data.content,
+      );
+
+      this.server.to(data.roomId).emit('newMessage', message);
+    } catch (err) {
+      client.emit('error', { message: (err as Error).message });
+    }
   }
 }
