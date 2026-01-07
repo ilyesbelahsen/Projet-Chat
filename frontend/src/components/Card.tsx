@@ -1,10 +1,9 @@
 import React from "react";
-import { Icon } from "lucide-react";
 
 interface CardProps {
   title: string;
   onClick: () => void;
-  icon?: Icon;
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   description?: string;
 }
 
