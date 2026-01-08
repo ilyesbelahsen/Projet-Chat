@@ -11,11 +11,11 @@ import { PasswordResetTokenEntity } from 'src/auth/password-reset.entity';
   imports: [
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT) || 3306,
-      username: process.env.DB_USER || 'chat_user',
-      password: process.env.DB_PASSWORD || 'password',
-      database: process.env.DB_NAME || 'chat_app',
+      host: process.env.DB_HOST,
+      port: Number(process.env.DB_PORT),
+      username: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,  
       entities: [
         User,
         Room,

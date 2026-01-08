@@ -19,14 +19,14 @@ resource "aws_ecs_task_definition" "chat_frontend_task_definition" {
       }
       environment = [
         {
-          name  = "BACKEND_URL"
-          value = "http://${aws_alb.chat-backend-endpoint.dns_name}"
-        }
+          name  = "BACKEND_ADDRESS"
+          value = aws_alb.chat-backend-endpoint.dns_name
+        },
       ]
       portMappings = [
         {
           containerPort = 80
-          hostPort      = 0
+          hostPort      = 0 
         }
       ]
     }

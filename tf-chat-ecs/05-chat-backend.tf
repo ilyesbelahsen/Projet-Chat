@@ -17,9 +17,16 @@ resource "aws_ecs_task_definition" "chat_backend_task_definition" {
           awslogs-stream-prefix = "container-log"
         }
       }
+      environment = [
+        { name = "DB_HOST", value = aws_db_instance.chat_db.address },
+        { name = "DB_PORT", value = tostring(aws_db_instance.chat_db.port) },
+        { name = "DB_USER", value = "admin" },
+        { name = "DB_PASSWORD", value = "Password123!" },
+        { name = "DB_NAME", value = "chatdb" }
+      ]
       portMappings = [
         {
-          containerPort = 3000
+          containerPort = 5000
           hostPort      = 0
         }
       ]
@@ -36,7 +43,7 @@ resource "aws_ecs_service" "chat-backend" {
   load_balancer {
     target_group_arn = aws_alb_target_group.chat-backend-target-group.arn
     container_name   = "chat-backend-container"
-    container_port   = 3000
+    container_port   = 5000
   }
 
 }
@@ -70,7 +77,17 @@ resource "aws_alb_target_group" "chat-backend-target-group" {
   vpc_id = aws_vpc.main.id
 
   name     = "chat-backend-target-group"
-  port     = 3000
+  port     = 5000
   protocol = "HTTP"
+
+    health_check {
+    path                = "/health"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
 
 }

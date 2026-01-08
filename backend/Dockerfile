@@ -28,7 +28,7 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 
 # Exposer le port
-EXPOSE 3000
+EXPOSE 5000
 
 # Commande de démarrage
 CMD ["node", "dist/main"]

@@ -17,7 +17,7 @@ type JwtPayload = { id: string; username: string; iat?: number; exp?: number };
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.WEB_ORIGIN ?? 'http://localhost:5173',
+    origin: process.env.WEB_ORIGIN ?? 'http://localhost:5000',
     credentials: true,
   },
 })
@@ -26,8 +26,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   constructor(
-      private readonly messagesService: MessagesService,
-      private readonly jwtService: JwtService,
+    private readonly messagesService: MessagesService,
+    private readonly jwtService: JwtService,
   ) {}
 
   handleConnection(client: Socket) {
@@ -39,7 +39,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         secret: process.env.JWT_SECRET || 'supersecretkey',
       });
 
-      if (!payload?.id) throw new UnauthorizedException('Invalid token payload');
+      if (!payload?.id)
+        throw new UnauthorizedException('Invalid token payload');
 
       // On attache l’identité au socket (source de vérité)
       client.data.userId = payload.id;
@@ -59,8 +60,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('joinRoom')
   handleJoinRoom(
-      @MessageBody() data: { roomId: string },
-      @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string },
+    @ConnectedSocket() client: Socket,
   ) {
     if (!client.data.userId) throw new UnauthorizedException();
     client.join(data.roomId);
@@ -68,8 +69,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('leaveRoom')
   handleLeaveRoom(
-      @MessageBody() data: { roomId: string },
-      @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string },
+    @ConnectedSocket() client: Socket,
   ) {
     if (!client.data.userId) throw new UnauthorizedException();
     client.leave(data.roomId);
@@ -77,8 +78,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
-      @MessageBody() data: { roomId: string; content: string }, // ✅ plus de userId !
-      @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; content: string }, // ✅ plus de userId !
+    @ConnectedSocket() client: Socket,
   ) {
     try {
       const userId = client.data.userId as string | undefined;
@@ -87,9 +88,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const author: User = { id: userId } as User;
 
       const message = await this.messagesService.sendMessage(
-          data.roomId,
-          author,
-          data.content,
+        data.roomId,
+        author,
+        data.content,
       );
 
       this.server.to(data.roomId).emit('newMessage', message);

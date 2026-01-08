@@ -9,3 +9,12 @@ output "chat-frontend-repo" {
 output "chat-backend-repo" {
   value = aws_ecr_repository.chat-backend-repo.repository_url
 }
+
+# Outputs pour récupérer l'adresse RDS
+output "chat_db_endpoint" {
+  value = aws_db_instance.chat_db.address
+}
+
+output "chat_db_port" {
+  value = aws_db_instance.chat_db.port
+}

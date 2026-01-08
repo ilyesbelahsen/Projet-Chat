@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const baseURL = (window as any).__ENV__?.BACKEND_URL;
+const baseURL = `http://${(window as any).__ENV__?.BACKEND_ADDRESS}`;
 
 export const api = axios.create({
   baseURL,
