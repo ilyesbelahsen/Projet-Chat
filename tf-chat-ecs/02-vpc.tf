@@ -80,14 +80,14 @@ resource "aws_subnet" "private_1a" {
   }
 }
 
-# resource "aws_subnet" "private_1b" {
-#   cidr_block = "172.16.3.0/24"
-#   vpc_id = aws_vpc.main.id
-#   availability_zone = "us-east-1b"
-#   tags = {
-#     Name = "chat-subnet-private"
-#   }
-# }
+resource "aws_subnet" "private_1b" {
+  cidr_block = "172.16.3.0/24"
+  vpc_id = aws_vpc.main.id
+  availability_zone = "us-east-1b"
+  tags = {
+    Name = "chat-subnet-private"
+  }
+}
 
 
 resource "aws_route_table_association" "public-1a" {
@@ -105,10 +105,10 @@ resource "aws_route_table_association" "private-1a" {
   route_table_id = aws_route_table.private_1a.id
 }
 
-# resource "aws_route_table_association" "private-1b" {
-#   subnet_id      = aws_subnet.private_1b.id
-#   route_table_id = aws_route_table.private_1a
-# }
+resource "aws_route_table_association" "private-1b" {
+  subnet_id      = aws_subnet.private_1b.id
+  route_table_id = aws_route_table.private_1a.id
+}
 
 resource "aws_route" "private_to_nat_gateway_1a" {
   route_table_id = aws_route_table.private_1a.id
@@ -116,11 +116,11 @@ resource "aws_route" "private_to_nat_gateway_1a" {
   nat_gateway_id = aws_nat_gateway.ngw.id
 }
 
-# resource "aws_route" "private_to_nat_gateway_1b" {
-#   route_table_id = aws_route_table.private_1b.id
-#   destination_cidr_block = "0.0.0.0/0"
-#   nat_gateway_id = aws_nat_gateway.ngw.id
-# }
+resource "aws_route" "private_to_nat_gateway_1b" {
+  route_table_id = aws_route_table.private_1b.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id = aws_nat_gateway.ngw.id
+}
 
 resource "aws_security_group" "main_security_group" {
   name        = "chat-ecs-sg"

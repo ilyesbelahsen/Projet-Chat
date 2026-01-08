@@ -1,3 +1,3 @@
 window.__ENV__ = {
-  BACKEND_URL: "http://localhost:3000",
+  BACKEND_ADDRESS: "localhost:5001",
 };
