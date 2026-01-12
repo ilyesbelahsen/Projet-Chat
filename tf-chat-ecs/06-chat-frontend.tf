@@ -22,6 +22,8 @@ resource "aws_ecs_task_definition" "chat_frontend_task_definition" {
           name  = "BACKEND_ADDRESS"
           value = aws_alb.chat-backend-endpoint.dns_name
         },
+        { name = "WS_ENDPOINT",     value = "${aws_apigatewayv2_api.chat_ws_api.api_endpoint}/${aws_apigatewayv2_stage.chat_ws_stage.name}"} 
+
       ]
       portMappings = [
         {

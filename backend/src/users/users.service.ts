@@ -58,7 +58,7 @@ export class UsersService {
 
   async updatePassword(userId: string, newPassword: string) {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error('User not found');
 
     const salt = await bcrypt.genSalt(10);
     user.password_hash = await bcrypt.hash(newPassword, salt);

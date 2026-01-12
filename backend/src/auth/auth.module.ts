@@ -11,7 +11,7 @@ import { PasswordResetTokenEntity } from './password-reset.entity';
 @Module({
   imports: [
     UsersModule,
-    TypeOrmModule.forFeature([RefreshTokenEntity,PasswordResetTokenEntity]),
+    TypeOrmModule.forFeature([RefreshTokenEntity, PasswordResetTokenEntity]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'supersecretkey',
       signOptions: { expiresIn: '15m' },

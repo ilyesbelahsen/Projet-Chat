@@ -1,13 +1,29 @@
-# Terraform state files
+############################
+# Terraform
+############################
 *.tfstate
 *.tfstate.backup
-
-# Terraform directories
 .terraform/
 .terraform.lock.hcl
-
-# Sensitive variable files
 *.tfvars
-
-# Crash logs
 crash.log
+
+############################
+# Lambda / Node.js
+############################
+node_modules/
+dist/
+*.zip
+
+############################
+# Logs
+############################
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+############################
+# OS
+############################
+.DS_Store
+Thumbs.db

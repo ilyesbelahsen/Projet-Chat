@@ -6,14 +6,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   console.log('🚀 Registered routes check');
+  app.use(cookieParser());
 
   app.enableCors({
     origin: true,
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
-
-  app.use(cookieParser());
 
   await app.listen(5000, '0.0.0.0');
 }

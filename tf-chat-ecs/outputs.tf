@@ -18,3 +18,7 @@ output "chat_db_endpoint" {
 output "chat_db_port" {
   value = aws_db_instance.chat_db.port
 }
+
+output "ws_endpoint" {
+  value = "${aws_apigatewayv2_api.chat_ws_api.api_endpoint}/${aws_apigatewayv2_stage.chat_ws_stage.name}"
+}

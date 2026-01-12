@@ -5,7 +5,6 @@ const baseURL = `http://${(window as any).__ENV__?.BACKEND_ADDRESS}`;
 
 export const api = axios.create({
   baseURL,
-  withCredentials: true, // obligatoire pour envoyer le cookie refresh_token
 });
 
 export const setApiToken = (token: string | null) => {

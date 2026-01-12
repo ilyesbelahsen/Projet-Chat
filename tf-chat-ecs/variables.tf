@@ -13,3 +13,8 @@ variable "lab_role" {
 variable "lab_instance_profile" {
   default = "arn:aws:iam::942388166843:instance-profile/LabInstanceProfile"
 }
+
+variable "aws_account_id" {
+  description = "AWS account ID"
+  default     = "942388166843"
+}

@@ -1,88 +1,54 @@
 import React, { useEffect, useState } from "react";
 import ChatLayout from "../components/ChatLayout";
-import type { Message } from "../types/chat";
-import { messagesService } from "../services/messagesService";
-import { roomsService } from "../services/roomsService";
+import { useAuth } from "../context/useAuth";
 import {
   connectSocket,
   disconnectSocket,
-  joinRoom,
-  leaveRoom,
   sendMessage,
   onNewMessage,
-} from "../services/socketService";
-import { useAuth } from "../context/useAuth";
+} from "../services/websocketService";
+
+import type { Message } from "../types/chat";
+import { roomsService } from "../services/roomsService";
+import { messagesService } from "../services/messagesService";
 
 const ChatGeneral: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [generalRoomId, setGeneralRoomId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { token, isReady, user } = useAuth();
+  const { token, isReady } = useAuth();
 
   useEffect(() => {
-    if (!isReady || !token || !user?.id) return;
+    if (!isReady || !token) return;
 
-    let roomIdLocal: string | null = null;
+    // 1️⃣ Récupérer room générale
+    roomsService.getGeneralRoom().then((room) => {
+      setGeneralRoomId(room.id);
 
-    const fetchGeneralRoom = async () => {
-      try {
-        const room = await roomsService.getGeneralRoom();
-        roomIdLocal = room.id;
-        setGeneralRoomId(room.id);
+      // 2️⃣ Récupérer messages existants
+      messagesService.getMessages(room.id).then((msgs) => setMessages(msgs));
 
-        const msgs = await messagesService.getMessages(room.id);
-        const messagesWithSystem = msgs.some((msg) => msg.id === "system-1")
-            ? msgs
-            : [
-              {
-                id: "system-1",
-                content: "Bienvenue sur le chat général 👋",
-                author: { id: "system", username: "System" },
-                created_at: new Date().toISOString(),
-              },
-              ...msgs,
-            ];
-        setMessages(messagesWithSystem);
+      // 3️⃣ Connexion WS
+      connectSocket(token, room.id);
+      onNewMessage((msg) => {
+        if (msg.room.id === room.id) setMessages((prev) => [...prev, msg]);
+      });
+    });
 
-        const socketInstance = connectSocket(token);
-        socketInstance.on("connect", () => {
-          joinRoom(room.id);
-
-          onNewMessage((msg: Message) => {
-            setMessages((prev) =>
-                prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
-            );
-          });
-        });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGeneralRoom();
-
-    return () => {
-      if (roomIdLocal) leaveRoom(roomIdLocal);
-      disconnectSocket();
-    };
-  }, [isReady, user?.id, token]);
+    return () => disconnectSocket();
+  }, [isReady, token]);
 
   const handleSendMessage = (content: string) => {
-    if (!generalRoomId || !user?.id) return;
+    if (!generalRoomId) return;
     sendMessage({ roomId: generalRoomId, content });
   };
 
-  if (loading) return <div>Chargement du chat général...</div>;
-
   return (
-      <ChatLayout
-          settings={false}
-          title="Chat Général"
-          messages={messages}
-          onSendMessage={handleSendMessage}
-      />
+    <ChatLayout
+      settings={false}
+      title="Chat Général"
+      messages={messages}
+      onSendMessage={handleSendMessage}
+    />
   );
 };
 
