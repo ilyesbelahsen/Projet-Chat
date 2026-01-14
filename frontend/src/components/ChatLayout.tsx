@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
@@ -18,6 +19,13 @@ const ChatLayout = ({
   header,
   settings,
 }: ChatLayoutProps) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll vers le bas quand les messages changent
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Si on fournit un header custom, on l'utilise, sinon header par défaut */}
@@ -25,6 +33,7 @@ const ChatLayout = ({
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <MessageList messages={messages} />
+        <div ref={messagesEndRef} />
       </div>
 
       <MessageInput onSend={onSendMessage} />

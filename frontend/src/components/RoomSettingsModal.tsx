@@ -47,6 +47,20 @@ const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (username.trim()) {
+                    try {
+                      await onAddMember(username.trim());
+                      setUsername("");
+                    } catch (err) {
+                      console.error(err);
+                      alert("Impossible d'ajouter le membre");
+                    }
+                  }
+                }
+              }}
               className="w-full border rounded px-3 py-2 mb-2 focus:outline-none focus:ring focus:ring-blue-300"
             />
             <button

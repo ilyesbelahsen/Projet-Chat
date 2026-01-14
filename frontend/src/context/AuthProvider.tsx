@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useState, type JSX } from "react";
 import { authService } from "../services/authService";
-import { setApiToken } from "../services/api";
+import { setApiAuthToken } from "../services/api";
 import type { User } from "../types/user";
 
 export interface AuthContextType {
@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{
   const login = (userData: User, tokenData: string, refreshToken: string) => {
     setUser(userData);
     setToken(tokenData);
-    setApiToken(tokenData);
+    setApiAuthToken(tokenData);
 
     // ✅ persistance
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     setUser(null);
     setToken(null);
-    setApiToken(null);
+    setApiAuthToken(null);
   };
 
   const updateUser = (userData: User) => {
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{
 
         setUser(res.user);
         setToken(res.token);
-        setApiToken(res.token);
+        setApiAuthToken(res.token);
 
         // 🔄 rotation
         localStorage.setItem(REFRESH_TOKEN_KEY, res.refreshToken);
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{
         localStorage.removeItem(REFRESH_TOKEN_KEY);
         setUser(null);
         setToken(null);
-        setApiToken(null);
+        setApiAuthToken(null);
       } finally {
         setIsReady(true);
       }

@@ -1,48 +1,42 @@
-import type { Room } from "../types/room";
-import type { User } from "../types/user";
+// frontend/src/services/roomsService.ts
+import type { Room, RoomDetailsDTO } from "../types/room";
 import { api } from "./api";
 
 export const roomsService = {
-  // Récupérer toutes les rooms de l'utilisateur
+  async getGeneralRoom(): Promise<Room> {
+    const res = await api.get<Room>("/rooms/general");
+    return res.data;
+  },
+
   async getUserRooms(): Promise<Room[]> {
     const res = await api.get<Room[]>("/rooms/my-rooms");
     return res.data;
   },
 
-  // Créer une nouvelle room
   async createRoom(name: string): Promise<Room> {
     const res = await api.post<Room>("/rooms/create", { name });
     return res.data;
   },
 
-  // Supprimer une room
-  async deleteRoom(roomId: string): Promise<void> {
-    await api.delete(`/rooms/${roomId}`);
-  },
-
-  // Ajouter un membre à une room par username
-  async addMember(roomId: string, username: string): Promise<User> {
-    const res = await api.post<User>(`/rooms/${roomId}/add-member`, {
-      username,
-    });
-    return res.data; // retourne le membre ajouté
-  },
-
-  // Supprimer un membre d'une room
-  async removeMember(roomId: string, userId: string): Promise<void> {
-    await api.delete(`/rooms/${roomId}/members/${userId}`);
-  },
-
-  // Récupérer les infos d'une room (membres + owner)
-  async getRoom(roomId: string): Promise<{ ownerId: string; members: User[] }> {
-    const res = await api.get<{ ownerId: string; members: User[] }>(
-      `/rooms/${roomId}`
-    );
+  async deleteRoom(roomId: number | string): Promise<{ ok: true }> {
+    const res = await api.delete<{ ok: true }>(`/rooms/${roomId}`);
     return res.data;
   },
 
-  async getGeneralRoom(): Promise<Room & { members: User[] }> {
-    const res = await api.get("/rooms/general");
+  // ✅ Backend: POST /rooms/:id/add-member body { username }
+  async addMember(roomId: number | string, username: string): Promise<{ ok: true }> {
+    const res = await api.post<{ ok: true }>(`/rooms/${roomId}/add-member`, { username });
+    return res.data;
+  },
+
+  async removeMember(roomId: number | string, userId: string): Promise<{ ok: true }> {
+    const res = await api.delete<{ ok: true }>(`/rooms/${roomId}/members/${userId}`);
+    return res.data;
+  },
+
+  // ✅ Backend: GET /rooms/:id => { room, members }
+  async getRoom(roomId: number | string): Promise<RoomDetailsDTO> {
+    const res = await api.get<RoomDetailsDTO>(`/rooms/${roomId}`);
     return res.data;
   },
 };

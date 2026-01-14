@@ -13,7 +13,7 @@ const MessageItem = ({ message }: MessageItemProps) => {
         <div className="flex items-center gap-2">
           <span className="font-semibold">{message.author.username}</span>
           <span className="text-xs text-gray-400">
-            {new Date(message.created_at).toLocaleTimeString()}
+            {new Date(message.createdAt).toLocaleTimeString()}
           </span>
         </div>
         <p className="text-gray-700">{message.content}</p>

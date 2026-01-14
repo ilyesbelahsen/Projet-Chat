@@ -12,6 +12,7 @@ const LoginPage: React.FC = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
   const getLoginErrorMessage = (err: unknown) => {
@@ -48,6 +49,18 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+
+    // Validation des mots de passe pour l'inscription
+    if (isSignup) {
+      if (password !== confirmPassword) {
+        setError("Les mots de passe ne correspondent pas");
+        return;
+      }
+      if (password.length < 6) {
+        setError("Le mot de passe doit contenir au moins 6 caractères");
+        return;
+      }
+    }
 
     try {
       const res = isSignup
@@ -105,6 +118,31 @@ const LoginPage: React.FC = () => {
           required
         />
 
+        {isSignup && (
+          <>
+            <input
+              type="password"
+              placeholder="Confirmer le mot de passe"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={`w-full p-2 mb-2 border rounded ${
+                confirmPassword && password !== confirmPassword
+                  ? "border-red-300 bg-red-50"
+                  : ""
+              }`}
+              required
+            />
+            {confirmPassword && password !== confirmPassword && (
+              <p className="text-xs text-red-500 mb-4">
+                Les mots de passe ne correspondent pas
+              </p>
+            )}
+            {(!confirmPassword || password === confirmPassword) && (
+              <div className="mb-4" />
+            )}
+          </>
+        )}
+
         {!isSignup && (
           <p
             className="text-sm text-right mb-4 text-blue-500 cursor-pointer"
@@ -127,7 +165,11 @@ const LoginPage: React.FC = () => {
 
         <p
           className="text-sm text-center mt-4 text-blue-500 cursor-pointer"
-          onClick={() => setIsSignup(!isSignup)}
+          onClick={() => {
+            setIsSignup(!isSignup);
+            setError("");
+            setConfirmPassword("");
+          }}
         >
           {isSignup
             ? "Déjà un compte ? Se connecter"

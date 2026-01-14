@@ -1,11 +1,12 @@
 {
   "name": "lambda",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "zip": "npm run build && zip -r lambda.zip dist node_modules package.json"
+    "clean": "rm -rf dist lambda.zip",
+    "package": "npm run clean && npm run build && zip -r lambda.zip dist node_modules"
   },
   "keywords": [],
   "author": "",

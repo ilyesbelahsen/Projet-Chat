@@ -13,14 +13,28 @@ import {
 } from "../services/websocketService";
 
 import type { Message } from "../types/chat";
-import type { User } from "../types/user";
+import { toMessage } from "../types/chat";
+import type { RoomMemberDTO } from "../types/room";
 import { useAuth } from "../context/useAuth";
+
+// Map RoomMemberDTO to the shape expected by RoomSettingsModal
+interface MemberUser {
+  id: string;
+  username: string;
+}
+
+function toMemberUser(dto: RoomMemberDTO): MemberUser {
+  return {
+    id: dto.userId,
+    username: dto.usernameSnapshot ?? "Unknown",
+  };
+}
 
 const RoomChat: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [members, setMembers] = useState<User[]>([]);
+  const [members, setMembers] = useState<MemberUser[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const { token, user, isReady } = useAuth();
 
@@ -28,21 +42,36 @@ const RoomChat: React.FC = () => {
     if (!isReady || !token || !roomId) return;
 
     // 1️⃣ Récupérer messages existants
-    messagesService.getMessages(roomId).then((msgs) => setMessages(msgs));
+    messagesService.getMessages(roomId).then((msgs) => setMessages(msgs.map(toMessage)));
 
     // 2️⃣ Connexion WS
     connectSocket(token, roomId);
-    onNewMessage((msg) => {
-      if (msg.room.id === roomId) setMessages((prev) => [...prev, msg]);
+
+    // 3️⃣ S'abonner aux nouveaux messages
+    const unsubscribe = onNewMessage((msg) => {
+      if (String(msg.roomId) === roomId) {
+        const newMsg: Message = {
+          id: msg.id,
+          roomId: msg.roomId,
+          userId: msg.userId,
+          content: msg.content,
+          createdAt: msg.createdAt,
+          author: { id: msg.userId, username: msg.username ?? "Unknown" },
+        };
+        setMessages((prev) => [...prev, newMsg]);
+      }
     });
 
-    // 3️⃣ Récupérer room + membres
-    roomsService.getRoom(roomId).then((room) => {
-      setMembers(room.members);
-      setIsOwner(room.ownerId === user?.id);
+    // 4️⃣ Récupérer room + membres
+    roomsService.getRoom(roomId).then((data) => {
+      setMembers(data.members.map(toMemberUser));
+      setIsOwner(data.room.ownerUserId === user?.id);
     });
 
-    return () => disconnectSocket();
+    return () => {
+      unsubscribe();
+      disconnectSocket();
+    };
   }, [isReady, token, roomId, user?.id]);
 
   const handleSendMessage = (content: string) => {
@@ -71,7 +100,7 @@ const RoomChat: React.FC = () => {
         onAddMember={async (username) => {
           await roomsService.addMember(roomId!, username);
           const roomData = await roomsService.getRoom(roomId!);
-          setMembers(roomData.members);
+          setMembers(roomData.members.map(toMemberUser));
         }}
         onDeleteRoom={async () => {
           await roomsService.deleteRoom(roomId!);

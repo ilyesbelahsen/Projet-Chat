@@ -4,7 +4,8 @@ import { api } from "./api";
 export interface UpdateUserPayload {
   username?: string;
   email?: string;
-  password?: string;
+  currentPassword?: string;  // Ancien mot de passe (requis si on change le password)
+  password?: string;         // Nouveau mot de passe
 }
 
 export const usersApi = {

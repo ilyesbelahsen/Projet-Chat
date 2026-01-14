@@ -17,7 +17,14 @@ const ForgotPassword: React.FC = () => {
         setLoading(true);
 
         try {
-            await api.post("/auth/forgot-password", { email });
+            const response = await api.post<{ ok: boolean; resetLink?: string }>("/auth/forgot-password", { email });
+
+            // En mode DEV/LAB, afficher le lien dans la console du navigateur
+            if (response.data.resetLink) {
+                console.log("%c[DEV MODE] Lien de réinitialisation:", "color: #22c55e; font-weight: bold; font-size: 14px;");
+                console.log("%c" + response.data.resetLink, "color: #3b82f6; font-size: 12px; padding: 8px; background: #f0f9ff; border-radius: 4px;");
+            }
+
             // Toujours afficher un message neutre (anti-enumération)
             setDone(true);
         } catch (err) {

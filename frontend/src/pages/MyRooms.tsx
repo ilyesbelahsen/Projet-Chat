@@ -4,16 +4,20 @@ import Card from "../components/Card";
 import type { Room } from "../types/room";
 import Layout from "../components/Layout";
 import { roomsService } from "../services/roomsService";
+import { useAuth } from "../context/useAuth";
 
 const MyRooms: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
         const userRooms = await roomsService.getUserRooms();
-        setRooms(userRooms);
+        // Filtrer le chat général (ne pas l'afficher dans "Mes Rooms")
+        const filteredRooms = userRooms.filter((room) => room.name !== "general");
+        setRooms(filteredRooms);
       } catch (err) {
         console.error("Erreur lors de la récupération des rooms :", err);
       }
@@ -22,8 +26,16 @@ const MyRooms: React.FC = () => {
     fetchRooms();
   }, []);
 
-  const handleOpenRoom = (roomId: string) => {
+  const handleOpenRoom = (roomId: number) => {
     navigate(`/rooms/${roomId}`);
+  };
+
+  const getRoomDescription = (room: Room): string => {
+    if (room.ownerUserId === user?.id) {
+      return "Room privée créée par vous";
+    }
+    const creatorName = room.ownerUsernameSnapshot || "un utilisateur";
+    return `Room privée créée par ${creatorName}`;
   };
 
   return (
@@ -38,7 +50,7 @@ const MyRooms: React.FC = () => {
               <Card
                 key={room.id}
                 title={room.name}
-                description="Room privée créée par vous ou à laquelle vous êtes invité"
+                description={getRoomDescription(room)}
                 onClick={() => handleOpenRoom(room.id)}
               />
             ))}
