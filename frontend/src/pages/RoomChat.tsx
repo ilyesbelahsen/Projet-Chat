@@ -36,6 +36,7 @@ const RoomChat: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [members, setMembers] = useState<MemberUser[]>([]);
   const [isOwner, setIsOwner] = useState(false);
+  const [roomName, setRoomName] = useState<string>("");
   const { token, user, isReady } = useAuth();
 
   useEffect(() => {
@@ -64,6 +65,7 @@ const RoomChat: React.FC = () => {
 
     // 4️⃣ Récupérer room + membres
     roomsService.getRoom(roomId).then((data) => {
+      setRoomName(data.room.name);
       setMembers(data.members.map(toMemberUser));
       setIsOwner(data.room.ownerUserId === user?.id);
     });
@@ -82,12 +84,12 @@ const RoomChat: React.FC = () => {
   return (
     <>
       <ChatLayout
-        title={`Room: ${roomId}`}
+        title={roomName || "Room"}
         messages={messages}
         onSendMessage={handleSendMessage}
         header={
           <ChatHeader
-            title={`Room: ${roomId}`}
+            title={roomName || "Room"}
             onOpenSettings={() => setModalOpen(true)}
             settings
           />
