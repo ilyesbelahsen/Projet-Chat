@@ -337,6 +337,13 @@ internal_api_key = "votre-cle-api-interne-securisee"
 
 ```bash
 cd tf-chat-ecs
+cd lambda
+npm run build
+zip -r lambda.zip dist node_modules package.json
+cd ../db-init-lambda
+npm install
+zip -r db-init.zip .
+cd ..
 terraform init
 ```
 
