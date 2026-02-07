@@ -6,14 +6,14 @@ import { RoomsService } from './rooms.service';
 
 import { Room } from './room.entity';
 import { RoomMembersModule } from '../room_members/room_members.module';
-import { SecurityModule } from '../auth/security.module';
+import { AuthModule } from '../auth/auth.module';
 import { AuthClientModule } from '../auth-client/auth-client.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Room]),
     RoomMembersModule,
-    SecurityModule,
+    AuthModule,
     AuthClientModule
   ],
   controllers: [RoomsController],

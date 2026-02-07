@@ -30,7 +30,7 @@ const expiresIn = parseExpiresIn(process.env.JWT_EXPIRES_IN);
     UsersModule,
     TypeOrmModule.forFeature([RefreshTokenEntity, PasswordResetTokenEntity]),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'dev-secret-change-me',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn },
     }),
   ],

@@ -5,7 +5,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { DatabaseModule } from './database/database.module';
-import { SecurityModule } from './security/security.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { MessagesModule } from './messages/messages.module';
 import { RoomMembersModule } from './room_members/room_members.module';
@@ -18,7 +17,6 @@ import { AuthClientModule } from './auth-client/auth-client.module';
     ConfigModule.forRoot({ isGlobal: true }),
     AuthClientModule,
     DatabaseModule,
-    SecurityModule,
     RoomMembersModule,
     RoomsModule,
     MessagesModule,

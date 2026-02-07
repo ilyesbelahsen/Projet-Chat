@@ -37,7 +37,7 @@ services:
       DB_SYNC: "true"
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: "15m"
-      INTERNAL_API_KEY: BvujKcptkLkHNXVl5ACYcNvWvNTMJ6ZABhr26mB21zzrBO99edOF5KASoVOKkj1A
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       DEV_MODE: "true"
       FRONTEND_URL: "http://localhost:5000"
     ports:
@@ -66,6 +66,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}
+      FRONTEND_URL: "http://localhost:5000"
     ports:
       - "5001:5000"
     depends_on:

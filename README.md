@@ -122,8 +122,8 @@ Cloud Chat est une application de messagerie en temps réel permettant aux utili
 ## Technologies Utilisées
 
 ### Frontend
-- **React 18** + **TypeScript**
-- **Vite** - Build tool
+- **React 19** + **TypeScript**
+- **Vite 7** - Build tool
 - **TailwindCSS** - Styling
 - **Axios** - HTTP client
 - **Lucide React** - Icônes
@@ -268,7 +268,7 @@ EOF
 #### 3. Lancer l'application
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 #### 4. Accéder à l'application
@@ -292,31 +292,17 @@ docker-compose up --build
 
 ### Configuration Obligatoire
 
-#### 1. Modifier `tf-chat-ecs/variables.tf`
+#### 1. Créer `tf-chat-ecs/terraform.tfvars`
 
-⚠️ **IMPORTANT** : Ces valeurs doivent être modifiées avant le déploiement !
-
-```hcl
-# Remplacer par votre ARN de rôle IAM
-variable "lab_role" {
-  default = "arn:aws:iam::YOUR_ACCOUNT_ID:role/YourRoleName"
-}
-
-# Remplacer par votre ARN d'instance profile
-variable "lab_instance_profile" {
-  default = "arn:aws:iam::YOUR_ACCOUNT_ID:instance-profile/YourInstanceProfile"
-}
-
-# Votre Account ID AWS
-variable "aws_account_id" {
-  default = "YOUR_ACCOUNT_ID"
-}
-```
-
-#### 2. Créer `tf-chat-ecs/terraform.tfvars`
+⚠️ **IMPORTANT** : Toutes les variables sensibles sont **sans valeur par défaut** et doivent être fournies dans `terraform.tfvars` avant le déploiement !
 
 ```hcl
-# Credentials base de données (OBLIGATOIRE - à personnaliser)
+# Compte AWS (OBLIGATOIRE)
+aws_account_id       = "YOUR_ACCOUNT_ID"
+lab_role             = "arn:aws:iam::YOUR_ACCOUNT_ID:role/YourRoleName"
+lab_instance_profile = "arn:aws:iam::YOUR_ACCOUNT_ID:instance-profile/YourInstanceProfile"
+
+# Credentials base de données (OBLIGATOIRE)
 db_username = "admin"
 db_password = "VotreMotDePasseSecurise123!"
 
@@ -433,8 +419,6 @@ terraform destroy
 | `DB_SYNC` | Synchronisation automatique du schéma | Non (défaut: false) |
 | `INTERNAL_API_KEY` | Clé pour communication inter-services | Oui |
 | `AUTH_SERVICE_URL` | URL du service d'authentification | Chat uniquement |
-| `AWS_REGION` | Région AWS pour SES | AWS uniquement |
-| `SES_SENDER_EMAIL` | Email expéditeur pour reset password | AWS uniquement |
 | `FRONTEND_URL` | URL du frontend (pour liens email) | Oui |
 
 #### Frontend
@@ -458,30 +442,6 @@ terraform destroy
 | `chat_db_name` | Nom BDD chat | `chat_db` |
 | `jwt_secret` | Secret JWT | ⚠️ À définir |
 | `internal_api_key` | Clé API interne | ⚠️ À définir |
-| `ses_sender_email` | Email pour envoi password reset | ⚠️ À définir |
-
-### Configuration Email (AWS SES)
-
-Pour activer l'envoi d'emails de réinitialisation de mot de passe :
-
-1. **Configurer l'email dans `terraform.tfvars`** :
-   ```hcl
-   ses_sender_email = "votre-email@example.com"
-   ```
-
-2. **Déployer l'infrastructure** :
-   ```bash
-   ./deploy-aws.sh
-   ```
-
-3. **Vérifier votre email** :
-   - AWS SES envoie un email de vérification à l'adresse configurée
-   - Cliquez sur le lien dans l'email pour valider l'identité
-
-4. **Mode Sandbox SES** :
-   - Par défaut, SES est en mode "sandbox"
-   - Vous ne pouvez envoyer qu'aux emails vérifiés
-   - Pour envoyer à tous, demandez une augmentation de quota via la console AWS SES
 
 ---
 
@@ -556,7 +516,7 @@ wss://endpoint/prod?token=JWT_TOKEN&roomId=ROOM_ID
 - [x] Inscription avec validation email/username unique
 - [x] Connexion / Déconnexion
 - [x] Refresh Token automatique
-- [x] Mot de passe oublié / Réinitialisation
+- [x] Mot de passe oublié / Réinitialisation (lien affiché en console en mode DEV)
 
 ### Chat
 - [x] Room de chat générale (tous les utilisateurs)
@@ -614,8 +574,3 @@ Vérifier les security groups et que RDS est bien dans le même VPC que les serv
 
 Projet réalisé dans le cadre du cours **Cloud Computing** - Polytech S9 INFO
 
----
-
-## License
-
-MIT License

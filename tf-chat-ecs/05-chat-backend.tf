@@ -32,7 +32,8 @@ resource "aws_ecs_task_definition" "chat_service_task_definition" {
         { name = "JWT_SECRET", value = var.jwt_secret },
         { name = "INTERNAL_API_KEY", value = var.internal_api_key },
         # Use internal ALB DNS for auth-service (port 80 on ALB)
-        { name = "AUTH_SERVICE_URL", value = "http://${aws_alb.auth_service_alb.dns_name}" }
+        { name = "AUTH_SERVICE_URL", value = "http://${aws_alb.auth_service_alb.dns_name}" },
+        { name = "FRONTEND_URL", value = "http://${aws_alb.frontend_alb.dns_name}" }
       ]
 
       portMappings = [
